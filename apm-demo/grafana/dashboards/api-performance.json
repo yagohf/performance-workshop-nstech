@@ -1,0 +1,341 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "panels": [],
+      "title": "HTTP Server Overview",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "Request Rate (RPS)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count[1m])) by (otel_service_name)",
+          "legendFormat": "{{otel_service_name}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "unit": "reqps"
+    },
+    {
+      "id": 2,
+      "title": "Error Rate (%)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{otel_status_code=\"Error\"}[1m])) by (otel_service_name) / sum(rate(http_server_request_duration_seconds_count[1m])) by (otel_service_name)) * 100",
+          "legendFormat": "{{otel_service_name}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "unit": "percent"
+    },
+    {
+      "id": 3,
+      "title": "Request Latency (ms)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "description": "Nota: O valor máximo mensurável para percentis é de 10.000ms (10s). Valores \"travados\" em 10.000 indicam que a latência real é maior que 10s.",
+      "fieldConfig": {
+        "defaults": {
+          "max": 12000
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_sum[2m])) / sum(rate(http_server_request_duration_seconds_count[2m])) * 1000",
+          "legendFormat": "Average"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket[2m])) by (le, otel_service_name)) * 1000",
+          "legendFormat": "P50 (Median)"
+        },
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(http_server_request_duration_seconds_bucket[2m])) by (le, otel_service_name)) * 1000",
+          "legendFormat": "P75"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(http_server_request_duration_seconds_bucket[2m])) by (le, otel_service_name)) * 1000",
+          "legendFormat": "P90"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket[2m])) by (le, otel_service_name)) * 1000",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[2m])) by (le, otel_service_name)) * 1000",
+          "legendFormat": "P99"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "unit": "ms"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 200,
+      "panels": [],
+      "title": ".NET GC & Memory",
+      "type": "row"
+    },
+    {
+      "id": 5,
+      "title": "GC Heap Size (MB)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "process_runtime_dotnet_gc_objects_size_bytes / 1048576",
+          "legendFormat": "Heap Size"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
+      "unit": "megabyte"
+    },
+    {
+      "id": 6,
+      "title": "GC Collections / sec",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(process_runtime_dotnet_gc_collections_count_total[1m])) by (generation)",
+          "legendFormat": "Gen {{generation}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      }
+    },
+    {
+      "id": 7,
+      "title": "Memory Allocation Rate (MB/s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(process_runtime_dotnet_gc_allocations_size_bytes_total[1m])) / 1048576",
+          "legendFormat": "Allocation Rate"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "unit": "mbytes"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 300,
+      "panels": [],
+      "title": ".NET Threading & Kestrel",
+      "type": "row"
+    },
+    {
+      "id": 8,
+      "title": "Thread Pool Queue Length",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "process_runtime_dotnet_thread_pool_queue_length",
+          "legendFormat": "Queue Length"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 27
+      }
+    },
+    {
+      "id": 14,
+      "title": "Thread Pool Threads",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "process_runtime_dotnet_thread_pool_threads_count",
+          "legendFormat": "Total Threads"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 27
+      }
+    },
+    {
+      "id": 9,
+      "title": "Kestrel Connections",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "kestrel_active_connections",
+          "legendFormat": "Active"
+        },
+        {
+          "expr": "kestrel_queued_connections",
+          "legendFormat": "Queued"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 27
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 400,
+      "panels": [],
+      "title": "HTTP Client (Queries EF Core)",
+      "type": "row"
+    },
+    {
+      "id": 10,
+      "title": "Outbound Request Rate (EF Core)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_client_request_duration_seconds_count[1m]))",
+          "legendFormat": "EF Core Queries / sec"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "unit": "reqps"
+    },
+    {
+      "id": 11,
+      "title": "Outbound Request Latency (P95)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_client_request_duration_seconds_bucket[2m])) by (le)) * 1000",
+          "legendFormat": "P95 Latency"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "unit": "ms"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "API Performance Dashboard (Final)",
+  "version": 5
+}
