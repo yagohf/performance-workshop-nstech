@@ -16,8 +16,8 @@ public class StatementService : IStatementService
 
     public async Task<StatementResponseDto> GetStatementAsync(int accountId, DateTime startDate, DateTime endDate)
     {
-        var transactions = await _repository.GetTransactionsByAccountAsync(accountId, startDate, endDate);
-        //await Task.Delay(TimeSpan.FromMilliseconds(10));
+        var transactions = (await _repository.GetTransactionsByAccountAsync(accountId, startDate, endDate)).ToList();
+        //await Task.Delay(TimeSpan.FromMilliseconds(50));
         //var transactions = MockTransactions();
         int count = transactions.Count();
         var response = new StatementResponseDto()
@@ -27,7 +27,7 @@ public class StatementService : IStatementService
 
         for (int i = 0; i < count; i++)
         {
-            var transaction = transactions.ElementAt(i);
+            var transaction = transactions[i];
             // #######################################################################
             // ### PROBLEMA DE ALTA ALOCAÇÃO (GC PRESSURE) E PICO DE CPU           ###
             // #######################################################################

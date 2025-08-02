@@ -27,6 +27,8 @@ public class StatementRepository : IStatementRepository
             .Include(t=> t.Category)
             .Where(t => t.AccountId == accountId && t.TransactionDate >= startDate && t.TransactionDate <= endDate)
             .OrderByDescending(t => t.TransactionDate)
+            .Take(50)
+            .Skip(0)
             .ToListAsync();
 
         return transactions;

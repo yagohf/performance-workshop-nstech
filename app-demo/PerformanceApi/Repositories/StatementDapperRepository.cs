@@ -13,9 +13,13 @@ namespace PerformanceApi.Repositories
             _dbConnectionFactory = dbConnectionFactoryFactory;
         }
 
-        public async Task<IEnumerable<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate,
+            DateTime endDate)
         {
-            const string query = @"
+            const int offset = 0;
+            const int pageSize = 50;
+            
+            string query = @"
                 SELECT 
                     t.Id, 
                     t.AccountId, 
@@ -28,21 +32,38 @@ namespace PerformanceApi.Repositories
                 WHERE t.AccountId = @AccountId
                   AND t.TransactionDate >= @StartDate
                   AND t.TransactionDate <= @EndDate
-                ORDER BY t.TransactionDate DESC";
+                ORDER BY t.TransactionDate DESC
+               OFFSET @Offset ROWS 
+                FETCH NEXT @PageSize ROWS ONLY";
 
             using var conn = _dbConnectionFactory.CreateConnection();
-            // var transactions = await conn.QueryAsync<Transaction, Category, Transaction>(
-            //     query,
-            //     (transaction, category) =>
+            var transactions = await conn.QueryAsync<Transaction, Category, Transaction>(
+                query,
+                (transaction, category) =>
+                {
+                    transaction.Category = category; // Realiza o mapeamento da categoria para a transação
+                    return transaction;
+                },
+                new
+                {
+                    AccountId = accountId, 
+                    StartDate = startDate, 
+                    EndDate = endDate,
+                    Offset = offset,
+                    PageSize = pageSize
+                },
+                splitOn: "CategoryId"
+            );
+
+            // var transactions = await conn.QueryAsync<Transaction>(query,
+            //     new
             //     {
-            //         transaction.Category = category; // Realiza o mapeamento da categoria para a transação
-            //         return transaction;
-            //     },
-            //     new { AccountId = accountId, StartDate = startDate, EndDate = endDate },
-            //     splitOn: "CategoryId"
-            // );
-            
-            var transactions = await conn.QueryAsync<Transaction>(query, new { AccountId = accountId, StartDate = startDate, EndDate = endDate });
+            //         AccountId = accountId, 
+            //         StartDate = startDate, 
+            //         EndDate = endDate,
+            //         Offset = offset,
+            //         PageSize = pageSize
+            //     });
 
             //return transactions.ToList();
             return transactions;
