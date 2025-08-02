@@ -13,7 +13,8 @@ public class StatementRepository : IStatementRepository
         _context = context;
     }
 
-    public async Task<List<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate,
+        DateTime endDate)
     {
         // #################################################
         // ### PROBLEMA N+1 - PONTO DE ORIGEM            ###

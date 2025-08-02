@@ -3,5 +3,5 @@ namespace PerformanceApi.Repositories;
 
 public interface IStatementRepository
 {
-    Task<List<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate, DateTime endDate);
 }

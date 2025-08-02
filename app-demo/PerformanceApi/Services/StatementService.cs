@@ -16,37 +16,42 @@ public class StatementService : IStatementService
 
     public async Task<StatementResponseDto> GetStatementAsync(int accountId, DateTime startDate, DateTime endDate)
     {
-        //var transactions = await _repository.GetTransactionsByAccountAsync(accountId, startDate, endDate);
-        await Task.Delay(TimeSpan.FromMilliseconds(10));
-        var transactions = MockTransactions();
-        var response = new StatementResponseDto();
+        var transactions = await _repository.GetTransactionsByAccountAsync(accountId, startDate, endDate);
+        //await Task.Delay(TimeSpan.FromMilliseconds(10));
+        //var transactions = MockTransactions();
+        int count = transactions.Count();
+        var response = new StatementResponseDto()
+        {
+            Transactions = new TransactionDto[count]
+        };
 
-        // foreach (var transaction in transactions)
-        // {
-        //     // #######################################################################
-        //     // ### PROBLEMA DE ALTA ALOCAÇÃO (GC PRESSURE) E PICO DE CPU           ###
-        //     // #######################################################################
-        //     // 1. ToBase64String: Aloca uma nova string para cada protocolo.
-        //     // 2. ToUpper: Acessar .Category.Name dispara a query N+1. Em seguida, .ToUpper() cria OUTRA string em maiúsculas.
-        //     // 3. string.Format: Aloca uma terceira string para juntar tudo.
-        //     // Para 1000 transações, teremos no mínimo 3000 alocações de string desnecessárias.
-        //     // O Garbage Collector (GC) trabalhará intensamente para limpar essa memória, causando picos de CPU.
-        //     // var formattedDetails = string.Format(
-        //     //     "Protocolo: {0} | Categoria: {1}",
-        //     //     Convert.ToBase64String(transaction.Protocol),
-        //     //     transaction.Category.Name.ToUpperInvariant()); // O acesso a .Category.Name dispara a query N+1
-        //
-        //     var transactionDto = new TransactionDto
-        //     {
-        //         Amount = transaction.Amount,
-        //         Date = transaction.TransactionDate,
-        //         Description = transaction.Description,
-        //         CategoryName = transaction.Category.Name, // Outro acesso que dispara a query N+1
-        //         // FormattedDetails = formattedDetails
-        //     };
-        //
-        //     response.Transactions.Add(transactionDto);
-        // }
+        for (int i = 0; i < count; i++)
+        {
+            var transaction = transactions.ElementAt(i);
+            // #######################################################################
+            // ### PROBLEMA DE ALTA ALOCAÇÃO (GC PRESSURE) E PICO DE CPU           ###
+            // #######################################################################
+            // 1. ToBase64String: Aloca uma nova string para cada protocolo.
+            // 2. ToUpper: Acessar .Category.Name dispara a query N+1. Em seguida, .ToUpper() cria OUTRA string em maiúsculas.
+            // 3. string.Format: Aloca uma terceira string para juntar tudo.
+            // Para 1000 transações, teremos no mínimo 3000 alocações de string desnecessárias.
+            // O Garbage Collector (GC) trabalhará intensamente para limpar essa memória, causando picos de CPU.
+            // var formattedDetails = string.Format(
+            //     "Protocolo: {0} | Categoria: {1}",
+            //     Convert.ToBase64String(transaction.Protocol),
+            //     transaction.Category.Name.ToUpperInvariant()); // O acesso a .Category.Name dispara a query N+1
+        
+            var transactionDto = new TransactionDto
+            {
+                Amount = transaction.Amount,
+                Date = transaction.TransactionDate,
+                Description = transaction.Description,
+                CategoryName = transaction.Category?.Name, // Outro acesso que dispara a query N+1
+                // FormattedDetails = formattedDetails
+            };
+        
+            response.Transactions[i] = transactionDto;
+        }
 
         // #######################################################################
         // ### PROBLEMA DE COMPLEXIDADE CICLOMÁTICA - Big O(n²)                ###

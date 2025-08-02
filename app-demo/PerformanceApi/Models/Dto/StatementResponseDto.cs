@@ -3,5 +3,5 @@
 public class StatementResponseDto
 {
     public decimal Balance { get; set; }
-    public List<TransactionDto> Transactions { get; set; } = new();
+    public TransactionDto[] Transactions { get; set; }
 }
