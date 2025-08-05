@@ -11,9 +11,8 @@ const statementResponseTrend = new Trend('statement_req_duration');
 // --- Perfil da Carga (Opções do Teste) ---
 export const options = {
   stages: [
-    { duration: '10s', target: 1000 }, // 1. Rampa de subida: de 0 a 10 usuários em 30 segundos
-    { duration: '50s', target: 1000 },  // 2. Carga sustentada: mantém 10 usuários por 1 minuto
-    // { duration: '15s', target: 0 },  // 3. Rampa de descida: volta para 0 usuários em 15 segundos
+    { duration: '10s', target: 50 }, // 1. Rampa de subida: de 0 a 50 usuários em 10 segundos
+    { duration: '50s', target: 50 },  // 2. Carga sustentada: mantém 50 usuários por 50 segundos
   ],
   thresholds: {
     'http_req_failed': ['rate<0.01'],
@@ -50,9 +49,9 @@ export default function () {
     check(res, {
       'status é 200': (r) => r.status === 200,
       'corpo da resposta não está vazio': (r) => r.body.length > 0,
-      'resposta contém um saldo': (r) => r.body.includes('balance'),
+      'resposta contém transacoes': (r) => r.body.includes('transactions')
     });
   });
 
-  sleep(1);
+  //sleep(1); // Para o teste de estresse, não queremos intervalo entre chamadas do VU.
 }

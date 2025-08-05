@@ -3,37 +3,41 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-// using OpenTelemetry.Metrics;
-// using OpenTelemetry.Resources;
-// using OpenTelemetry.Trace;
 using PerformanceApi.Data;
 using PerformanceApi.Repositories;
 using PerformanceApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configuração de Serviços e Injeção de Dependência
+// #######################################################################
+// 1. Middlewares do ASP.NET e Swagger
+// #######################################################################
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configurando o EF Core com a connection string do appsettings.json
+// #######################################################################
+// 2. Configurando acesso a banco
+// #######################################################################
+
+// 2.1. EF Core
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PerformanceDbContext>(options =>
-    //options.UseLazyLoadingProxies()
-    options.UseSqlServer(connectionString));
+    options.UseLazyLoadingProxies()
+    .UseSqlServer(connectionString));
 
-// Connection factory
-builder.Services.AddSingleton<IDbConnectionFactory>(
-    new SqlServerConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Injetando as camadas
-builder.Services.AddScoped<IStatementService, StatementService>();
-//builder.Services.AddScoped<IStatementRepository, StatementRepository>();
-builder.Services.AddScoped<IStatementRepository, StatementDapperRepository>();
+builder.Services.AddScoped<IStatementRepository, StatementRepository>();
 
 // #######################################################################
-// ### 2. CONFIGURAÇÃO DO OPENTELEMETRY                                ###
+// 3. Serviços
+// #######################################################################
+
+builder.Services.AddScoped<IRiskScoreService, RiskScoreService>();
+builder.Services.AddScoped<IStatementService, StatementService>();
+
+// #######################################################################
+// 4. OpenTelemetry
 // #######################################################################
 const string serviceName = "PerformanceApi.Demo";
 builder.Services.AddOpenTelemetry()
@@ -48,12 +52,6 @@ builder.Services.AddOpenTelemetry()
             options.SetDbStatementForText = true;
             options.RecordException = true;
         })
-        // .AddOtlpExporter(opt => // Envia os dados para um Coletor OpenTelemetry
-        // {
-        //     // O endpoint padrão do coletor OTLP. O Grafana Agent ou outro coletor
-        //     // estará ouvindo nesta porta.
-        //     opt.Endpoint = new Uri("http://localhost:4318");
-        //     opt.Protocol = OtlpExportProtocol.HttpProtobuf;
         .AddJaegerExporter(opt =>
         {
             opt.Endpoint = new Uri("http://localhost:14268/api/traces");
@@ -63,11 +61,6 @@ builder.Services.AddOpenTelemetry()
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddRuntimeInstrumentation()
-        // .AddOtlpExporter(opt => // Envia os dados para um Coletor OpenTelemetry
-        // {
-        //     opt.Endpoint = new Uri("http://localhost:4318");
-        //     opt.Protocol = OtlpExportProtocol.HttpProtobuf;
-        // }));
         .AddPrometheusExporter());
 
 var app = builder.Build();
@@ -78,7 +71,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// OpenTelemetry
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
-app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
