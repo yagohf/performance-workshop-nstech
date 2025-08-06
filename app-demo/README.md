@@ -96,7 +96,7 @@ public class StatementDapperRepository : IStatementRepository
     public async Task<IEnumerable<Transaction>> GetTransactionsByAccountAsync(int accountId, DateTime startDate,
         DateTime endDate)
     {
-        string query = @"
+        const string query = @"
             SELECT 
                 t.Id, 
                 t.AccountId, 
@@ -164,6 +164,7 @@ Resultado do explain plain:
 - AvgRowSize: 300 bytes;
 - Nro de linhas retornadas por query: 2000 (em média)
 - Total de bytes trafegados via rede por query: 300 x 2000 = 600.000 bytes (ou 600 Kb)
+- 50 clientes simultâneos = tráfego de 30MB/segundo pela rede e alocação de 30MB/segundo (pelo menos) em nossa aplicação
 ```
 
 Nunca teremos uma performance aceitável trafegando tantos dados. A alocação ainda continua bem alta, o GC ainda está trabalhando muito; 
