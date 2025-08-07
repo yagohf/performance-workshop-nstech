@@ -11,8 +11,8 @@ const statementResponseTrend = new Trend('statement_req_duration');
 // --- Perfil da Carga (Opções do Teste) ---
 export const options = {
   stages: [
-    { duration: '10s', target: 50 }, // 1. Rampa de subida: de 0 a 50 usuários em 10 segundos
-    { duration: '50s', target: 50 },  // 2. Carga sustentada: mantém 50 usuários por 50 segundos
+    { duration: '5s', target: 50 }, // 1. Rampa de subida: de 0 a 50 usuários em 5 segundos
+    { duration: '30s', target: 50 },  // 2. Carga sustentada: mantém 50 usuários por 30 segundos
   ],
   thresholds: {
     'http_req_failed': ['rate<0.01'],
